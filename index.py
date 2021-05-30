@@ -1,48 +1,46 @@
-import six
-from google.cloud import translate_v2 as translate
+import argparse
+import glob
+import sys
+import errno
+from utils import translationService
 
-samplerawtext = '손자의 전쟁 예술'
-samplecorrecttranslate = 'The art of war by Sun Tzu'
+# def str2bool(v):
+#     if isinstance(v, bool):
+#         return v
+#     if v.lower() in ('yes', 'true', 't', 'y', '1'):
+#         return True
+#     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+#         return False
+#     else:
+#         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-def translate_text(target, text):
-    """Translates text into the target language.
+# parser = argparse.ArgumentParser(description="Dry run will not call APIs and directly export untranslated text to output")
+# parser.add_argument('-d', type=str2bool, nargs='?', const=True, default=False, help='Do a dryrun without any API calls or translations')
+# args = parser.parse_args()
+# print(args.dryrun)
 
-    Target must be an ISO 639-1 language code.
-    See https://g.co/cloud/translate/v2/translate-reference#supported_languages
-    """
+dryrunFlag = True
 
-    translate_client = translate.Client()
 
-    if isinstance(text, six.binary_type):
-        text = text.decode("utf-8")
-
-    # Text can also be a sequence of strings, in which case this method
-    # will return a sequence of results for each text.
-    result = translate_client.translate(text, target_language=target)
-
-    print(u"Text: {}".format(result["input"]))
-    print(u"Translation: {}".format(result["translatedText"]))
-    print(u"Detected source language: {}".format(result["detectedSourceLanguage"]))
-
-def translate_text_with_model(target, text, model="nmt"):
-    """Translates text into the target language.
-
-    Make sure your project is allowlisted.
-
-    Target must be an ISO 639-1 language code.
-    See https://g.co/cloud/translate/v2/translate-reference#supported_languages
-    """
-    translate_client = translate.Client()
-
-    if isinstance(text, six.binary_type):
-        text = text.decode("utf-8")
-
-    # Text can also be a sequence of strings, in which case this method
-    # will return a sequence of results for each text.
-    result = translate_client.translate(text, target_language=target, model=model)
-
-    print(u"Text: {}".format(result["input"]))
-    print(u"Translation: {}".format(result["translatedText"]))
-    print(u"Detected source language: {}".format(result["detectedSourceLanguage"]))
-
-translate_text('en', samplerawtext)
+path = './input/*.txt'
+files=glob.glob(path)
+for name in files: # 'file' is a builtin type, 'name' is a less-ambiguous variable name.
+    try:
+        print(name)
+        outputarr = name.split("/")
+        outputarr[1] = 'output'
+        outputpath = '/'.join(outputarr)
+        with open(name) as f: # No need to specify 'r': this is the default.
+            content = f.read()
+            f.close()
+            print(content)
+            if (dryrunFlag):
+                translation = content
+            else:
+                translation = translationService.translate_text('en', content)
+            w=open(outputpath, 'w')
+            w.write(translation)
+            w.close()
+    except IOError as exc:
+        if exc.errno != errno.EISDIR: # Do not fail if a directory is found, just ignore it.
+            raise # Propagate other kinds of IOError.
