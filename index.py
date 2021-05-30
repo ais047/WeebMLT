@@ -2,25 +2,27 @@ import argparse
 import glob
 import sys
 import errno
-from utils import translationService
+from utils import googleTranslationService
+from utils import deepLTranslationService
 
-# def str2bool(v):
-#     if isinstance(v, bool):
-#         return v
-#     if v.lower() in ('yes', 'true', 't', 'y', '1'):
-#         return True
-#     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-#         return False
-#     else:
-#         raise argparse.ArgumentTypeError('Boolean value expected.')
+def str2bool(v):
+    print(v)
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
-# parser = argparse.ArgumentParser(description="Dry run will not call APIs and directly export untranslated text to output")
-# parser.add_argument('-d', type=str2bool, nargs='?', const=True, default=False, help='Do a dryrun without any API calls or translations')
-# args = parser.parse_args()
-# print(args.dryrun)
+parser = argparse.ArgumentParser(description="Dry run will not call APIs and directly export untranslated text to output")
+parser.add_argument("--dryrun", type=str2bool, nargs='?',
+                        const=True, default=True,
+                        help="Activate nice mode.")
+args = parser.parse_args()
 
-dryrunFlag = True
-
+dryrunFlag = args.dryrun
 
 path = './input/*.txt'
 files=glob.glob(path)
@@ -35,9 +37,12 @@ for name in files: # 'file' is a builtin type, 'name' is a less-ambiguous variab
             f.close()
             print(content)
             if (dryrunFlag):
+                print('dry')
                 translation = content
             else:
-                translation = translationService.translate_text('en', content)
+                print('non dry')
+                translation = content
+                # translation = deepLTranslationService.translate_text('EN', content);
             w=open(outputpath, 'w')
             w.write(translation)
             w.close()
